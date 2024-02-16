@@ -8,6 +8,7 @@ import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.Linq4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -112,7 +113,7 @@ public class HiveTable extends AbstractTable implements FilterableTable {
         }
     }
 
-    public Enumerable<Object[]> scan(DataContext dataContext) {
+    public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
     	System.out.println("iam here");
         // Implement scanning logic to retrieve data from the Hive table
     	try (Connection hiveConnection = establishConnection(hiveConnectionUrl, hiveUser, hivePassword); 
@@ -130,19 +131,23 @@ public class HiveTable extends AbstractTable implements FilterableTable {
                             try {
                                 return resultSet.next();
                             } catch (SQLException e) {
-                                throw new RuntimeException("Error while reading from ResultSet", e);
+                            	return false;
+//                                throw new RuntimeException("Error while reading from ResultSet", e);
                             }
                         }
+//                       }
 
                         @Override
                         public Object[] next() {
                             try {
+                            	System.out.println("Inside Next Function...");
                                 ResultSetMetaData metaData = resultSet.getMetaData();
                                 int columnCount = metaData.getColumnCount();
                                 Object[] row = new Object[columnCount];
                                 for (int i = 0; i < columnCount; i++) {
                                     row[i] = resultSet.getObject(i + 1);
                                 }
+                                System.out.println(row.toString());
                                 return row;
                             } catch (SQLException e) {
                                 throw new RuntimeException("Error while reading from ResultSet", e);
@@ -184,47 +189,83 @@ public class HiveTable extends AbstractTable implements FilterableTable {
             throw new RuntimeException("Error establishing Hive connection", e);
         }
     }
-
-	@Override
-	public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
-		// TODO Auto-generated method stub
-		System.out.println("Insid Enumerator\n\n-------------------\n");
-		JavaTypeFactory typeFactory = root.getTypeFactory();
-	    final List<RelDataType> fieldTypes = getFieldTypes(typeFactory);
-	    final @Nullable String[] filterValues = new String[fieldTypes.size()];
-	    filters.removeIf(filter -> addFilter(filter, filterValues));
-	    final List<Integer> fields = ImmutableIntList.identity(fieldTypes.size());
-	    final AtomicBoolean cancelFlag = DataContext.Variable.CANCEL_FLAG.get(root);
-	    return new AbstractEnumerable<@Nullable Object[]>() {
-	      @Override public Enumerator<@Nullable Object[]> enumerator() {
-	        return new CsvEnumerator<>(source, cancelFlag, false, filterValues,
-	            CsvEnumerator.arrayConverter(fieldTypes, fields, false));
-	      }
-	    };
-	}
-	
-	private static boolean addFilter(RexNode filter, @Nullable Object[] filterValues) {
-	    if (filter.isA(SqlKind.AND)) {
-	        // We cannot refine(remove) the operands of AND,
-	        // it will cause o.a.c.i.TableScanNode.createFilterable filters check failed.
-	      ((RexCall) filter).getOperands().forEach(subFilter -> addFilter(subFilter, filterValues));
-	    } else if (filter.isA(SqlKind.EQUALS)) {
-	      final RexCall call = (RexCall) filter;
-	      RexNode left = call.getOperands().get(0);
-	      if (left.isA(SqlKind.CAST)) {
-	        left = ((RexCall) left).operands.get(0);
-	      }
-	      final RexNode right = call.getOperands().get(1);
-	      if (left instanceof RexInputRef
-	          && right instanceof RexLiteral) {
-	        final int index = ((RexInputRef) left).getIndex();
-	        if (filterValues[index] == null) {
-	          filterValues[index] = ((RexLiteral) right).getValue2().toString();
-	          return true;
-	        }
-	      }
-	    }
-	    return false;
-	  }
-
 }
+
+
+
+//	@Override
+//	public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
+//		// TODO Auto-generated method stub
+//		System.out.println("Insid Enumerator\n\n-------------------\n");
+//		JavaTypeFactory typeFactory = root.getTypeFactory();
+//	    final List<RelDataTypeField> fieldTypes = getRowType(typeFactory).getFieldList();
+//        final @Nullable String[] filterValues = new String[fieldTypes.size()];
+//	    filters.removeIf(filter -> addFilter(filter, filterValues));
+//	    final List<Integer> fields = ImmutableIntList.identity(fieldTypes.size());
+//	    final AtomicBoolean cancelFlag = DataContext.Variable.CANCEL_FLAG.get(root);
+//
+//        return new AbstractEnumerable<@Nullable Object[]>() {
+//          @Override public Enumerator<@Nullable Object[]> enumerator() {
+//            return new HiveEnumerator<>(cancelFlag, filterValues, fields);
+//          }
+//        };
+//        
+//	}
+//	
+//	private static boolean addFilter(RexNode filter, @Nullable Object[] filterValues) {
+//	    if (filter.isA(SqlKind.AND)) {
+//	        // We cannot refine(remove) the operands of AND,
+//	        // it will cause o.a.c.i.TableScanNode.createFilterable filters check failed.
+//	      ((RexCall) filter).getOperands().forEach(subFilter -> addFilter(subFilter, filterValues));
+//	    } else if (filter.isA(SqlKind.EQUALS)) {
+//	      final RexCall call = (RexCall) filter;
+//	      RexNode left = call.getOperands().get(0);
+//	      if (left.isA(SqlKind.CAST)) {
+//	        left = ((RexCall) left).operands.get(0);
+//	      }
+//	      final RexNode right = call.getOperands().get(1);
+//	      if (left instanceof RexInputRef
+//	          && right instanceof RexLiteral) {
+//	        final int index = ((RexInputRef) left).getIndex();
+//	        if (filterValues[index] == null) {
+//	          filterValues[index] = ((RexLiteral) right).getValue2().toString();
+//	          return true;
+//	        }
+//	      }
+//	    }
+//	    return false;
+//	  }
+//
+//}
+//
+//class HiveEnumerator<E> implements Enumerator<E> {
+//      private final AtomicBoolean cancelFlag;
+//      private final @Nullable Object[] filterValues;
+//      private final List<Integer> fields;
+//      private boolean cancelRequested = false;
+//
+//      HiveEnumerator(AtomicBoolean cancelFlag, @Nullable Object[] filterValues, List<Integer> fields) {
+//        this.cancelFlag = cancelFlag;
+//        this.filterValues = filterValues;
+//        this.fields = fields;
+//      }
+//
+//      @Override public E current() {
+//        return null;
+//      }
+//
+//      @Override public boolean moveNext() {
+//        if (cancelFlag.get()) {
+//          cancelRequested = true;
+//          return false;
+//        }
+//        return true;
+//      }
+//
+//      @Override public void reset() {
+//        cancelRequested = false;
+//      }
+//
+//      @Override public void close() {
+//      }
+//    }
