@@ -2,6 +2,8 @@ package com.dataphion.calcite.adapter.hive;
 
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.AbstractSchema;
+import org.apache.calcite.util.Source;
+import org.apache.calcite.util.Sources;
 
 import java.sql.DatabaseMetaData;
 import java.sql.Connection;
@@ -54,11 +56,11 @@ public class HiveSchema extends AbstractSchema {
        	    ResultSet tables = Statement.executeQuery("show tables");
        	    while (tables.next()) {
 	            String tableName = tables.getString(2);
-//	            System.out.println("tableName: " + tableName);
-//	            System.out.println("namespace: " + tables.getString(1));
+	            System.out.println("tableName: " + tableName);
+	            System.out.println("namespace: " + tables.getString(1));
 	            // Create a HiveTable for each table and add it to the map
 	            tableMap.put(tableName, new HiveTable(tableName, hiveConnectionUrl, hiveUser, hivePassword, namespace));
-	            //System.out.println("tableMap" + tableMap);
+	            System.out.println("tableMap" + tableMap);
 	        }
        	    
        	    

@@ -24,7 +24,7 @@ public class Testhive
         List<Map<String, Object>> results = new ArrayList<>();
     	
         Properties info = new Properties();
-        info.put("model", "D:/hive-calcite-adapter/src/main/java/com/dataphion/calcite/adapter/hive/model.json");
+        info.put("model", "/Users/ravishankar/dataphion/hive-calcite-adapter/src/main/java/com/dataphion/calcite/adapter/hive/model.json");
         info.list(System.out);
         try (Connection connection = DriverManager.getConnection("jdbc:calcite:", info)) {
             CalciteConnection calciteConn = connection.unwrap(CalciteConnection.class);
