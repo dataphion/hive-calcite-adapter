@@ -121,45 +121,56 @@ public class HiveTable extends AbstractTable implements FilterableTable {
     		 System.out.println("iam here");
     		 statement.executeQuery("use " + namespace);
     		 
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName); {
-            return new AbstractEnumerable<Object[]>() {
-                @Override
-                public Enumerator<Object[]> enumerator() {
-                    return Linq4j.iterableEnumerator(() -> new Iterator<Object[]>() {
-                        @Override
-                        public boolean hasNext() {
-                            try {
-                                return resultSet.next();
-                            } catch (SQLException e) {
-                            	return false;
-//                                throw new RuntimeException("Error while reading from ResultSet", e);
-                            }
-                        }
+    		 ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
+
+             List<Object[]> rows = new ArrayList<>();
+             while (resultSet.next()) {
+                 ResultSetMetaData metaData = resultSet.getMetaData();
+                 int columnCount = metaData.getColumnCount();
+                 Object[] row = new Object[columnCount];
+                 for (int i = 0; i < columnCount; i++) {
+                     row[i] = resultSet.getObject(i + 1);
+                 }
+                 System.out.println(row.toString());
+                 rows.add(row);
+             }
+
+             return new AbstractEnumerable<Object[]>() {
+                 @Override
+                 public Enumerator<Object[]> enumerator() {
+                     return Linq4j.iterableEnumerator(() -> rows.iterator());
+                 }
+             };
+         } catch (SQLException e) {
+             throw new RuntimeException("Failed to execute query", e);
+         }
+     }
 //                       }
 
-                        @Override
-                        public Object[] next() {
-                            try {
-                            	System.out.println("Inside Next Function...");
-                                ResultSetMetaData metaData = resultSet.getMetaData();
-                                int columnCount = metaData.getColumnCount();
-                                Object[] row = new Object[columnCount];
-                                for (int i = 0; i < columnCount; i++) {
-                                    row[i] = resultSet.getObject(i + 1);
-                                }
-                                System.out.println(row.toString());
-                                return row;
-                            } catch (SQLException e) {
-                                throw new RuntimeException("Error while reading from ResultSet", e);
-                            }
-                        }
-                    });
-                }
-            };
-        } }catch (SQLException e) {
-            throw new RuntimeException("Failed to execute query", e);
-        }
-    }
+//                        @Override
+//                        public Object[] next() {
+//                            try {
+//                            	System.out.println("Inside Next Function...");
+//                                ResultSetMetaData metaData = resultSet.getMetaData();
+//                                int columnCount = metaData.getColumnCount();
+//                                Object[] row = new Object[columnCount];
+//                                for (int i = 0; i < columnCount; i++) {
+//                                    row[i] = resultSet.getObject(i + 1);
+//                                }
+//                                System.out.println(row.toString());
+//                                return row;
+//                            } catch (SQLException e) {
+//                                throw new RuntimeException("Error while reading from ResultSet", e);
+//                            }
+//                        }
+//                    });
+//                }
+//            };
+//        } 
+//    		}catch (SQLException e) {
+//            throw new RuntimeException("Failed to execute query", e);
+//        }
+ 
 
     public void executeUpdate(String query) {
         // Execute a non-query SQL statement (e.g., INSERT, UPDATE, DELETE)
