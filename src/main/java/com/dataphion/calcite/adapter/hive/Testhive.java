@@ -24,13 +24,14 @@ public class Testhive
         List<Map<String, Object>> results = new ArrayList<>();
     	
         Properties info = new Properties();
-        info.put("model", "/Users/ravishankar/dataphion/hive-calcite-adapter/src/main/java/com/dataphion/calcite/adapter/hive/model.json");
+        info.put("model", "/Users/ravishankar/dataphion/hive-calcite-adapter/src/main/java/com/dataphion/calcite/adapter/hive/models.json");
+        //info.put("model", "D:/hermes-addons/hive-calcite-adapter/src/main/java/com/dataphion/calcite/adapter/hive/models.json");
         info.list(System.out);
         try (Connection connection = DriverManager.getConnection("jdbc:calcite:", info)) {
             CalciteConnection calciteConn = connection.unwrap(CalciteConnection.class);
             Statement statement = calciteConn.createStatement();
             ResultSet resultSet = statement.executeQuery(            		
-            		"select * from \"sqlreport\".\"school\".\"students\""
+            		"select * from \"sqlreport\".\"school\".\"students\" INNER JOIN POSTGRESDB.\"student\" ON \"sqlreport\".\"school\".\"students\".\"student_id\" = \"student\".\"id\""
             );
 
             ResultSetMetaData metaData = resultSet.getMetaData();
