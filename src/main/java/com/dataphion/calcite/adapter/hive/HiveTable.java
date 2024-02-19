@@ -14,7 +14,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.schema.FilterableTable;
+import org.apache.calcite.schema.ProjectableFilterableTable;
 import org.apache.calcite.schema.impl.AbstractTable;
 import org.apache.calcite.sql.SqlKind;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -31,7 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class HiveTable extends AbstractTable implements FilterableTable {
+public class HiveTable extends AbstractTable implements ProjectableFilterableTable {
 
 	private final String tableName;
 	private final String hiveConnectionUrl;
@@ -200,6 +200,14 @@ public class HiveTable extends AbstractTable implements FilterableTable {
             throw new RuntimeException("Error establishing Hive connection", e);
         }
     }
+
+
+
+	@Override
+	public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters, int @Nullable [] projects) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 
 
