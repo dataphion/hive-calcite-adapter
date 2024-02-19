@@ -15,19 +15,22 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 public class HiveSchema extends AbstractSchema {
 
     private final String hiveConnectionUrl;
     private final String hiveUser;
     private final String hivePassword;
+    private final String catalog;
     private final String namespace;
 	private Connection connection;
 
-    public HiveSchema(String hiveConnectionUrl, String hiveUser, String hivePassword, String namespace) {
+    public HiveSchema(String hiveConnectionUrl, String hiveUser, String hivePassword, String catalog, String namespace) {
         this.hiveConnectionUrl = hiveConnectionUrl;
         this.hiveUser = hiveUser;
         this.hivePassword = hivePassword;
+        this.catalog = catalog;
         this.namespace = namespace;
         
         try {
@@ -38,6 +41,25 @@ public class HiveSchema extends AbstractSchema {
         }
         
     }
+
+    // Override method to return sub-schema
+    @Override
+    protected Map<String, org.apache.calcite.schema.Schema> getSubSchemaMap() {
+    	System.out.println("Inside get Subschema Map.. => "+catalog);
+    	System.out.println("Inside get Subschema Map namespace.. => "+namespace);
+    	Map<String, org.apache.calcite.schema.Schema> schemaMap = new HashMap<>();
+    	if(namespace == null || namespace == "") {
+    		// Add sub-schema to the map
+            schemaMap.put("finance", new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, "finance"));
+            schemaMap.put("docs", new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, "docs"));
+            schemaMap.put("test", new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, "test"));
+            schemaMap.put("data", new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, "data"));
+            schemaMap.put("school", new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, "school"));
+            schemaMap.put("institute", new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, "institute"));
+    	}
+        return schemaMap;
+    }
+
 
     @SuppressWarnings("finally")
 	@Override

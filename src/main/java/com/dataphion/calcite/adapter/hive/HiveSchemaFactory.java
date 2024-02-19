@@ -12,11 +12,12 @@ public class HiveSchemaFactory implements SchemaFactory {
         String hiveConnectionUrl = (String) operand.get("hiveConnectionUrl");
         String hiveUser = (String) operand.get("hiveUser");
         String hivePassword = (String) operand.get("hivePassword");
-        String namespace = (String) operand.get("namespace");
+        String catalog = (String) operand.get("catalog");
+        String namespace = null;
 
         System.out.println(hiveConnectionUrl);
 
         // Create and return an instance of HiveSchema
-        return new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, namespace);
+        return new HiveSchema(hiveConnectionUrl, hiveUser, hivePassword, catalog, namespace);
     }
 }

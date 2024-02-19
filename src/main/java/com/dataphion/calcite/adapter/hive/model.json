@@ -11,7 +11,7 @@
           "hiveConnectionUrl": "jdbc:hive2://172.172.160.72:8800/sqlreport;transportMode=http;httpPath=lakehouse/sqlreport",
           "hiveUser": "sahuusharani47@gmail.com",
           "hivePassword": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUzLCJpYXQiOjE3MDcyMDUwOTIsImV4cCI6MTcwOTc5NzA5Mn0.qDONWpDNTeil79odTKUkTsX3ehfvZkQzji8MK8uDGDQ",
-          "namespace": "school"  
+	  "catalog": "sqlreport"
         }
       }
     ]

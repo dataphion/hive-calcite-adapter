@@ -30,7 +30,7 @@ public class Testhive
             CalciteConnection calciteConn = connection.unwrap(CalciteConnection.class);
             Statement statement = calciteConn.createStatement();
             ResultSet resultSet = statement.executeQuery(            		
-            		"select * from \"sqlreport\".\"students\""
+            		"select * from \"sqlreport\".\"school\".\"students\""
             );
 
             ResultSetMetaData metaData = resultSet.getMetaData();
