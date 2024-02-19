@@ -1,25 +1,16 @@
 package com.dataphion.calcite.adapter.hive;
 
 import org.apache.calcite.DataContext;
-import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.linq4j.AbstractEnumerable;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.Linq4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelProtoDataType;
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.ProjectableFilterableTable;
 import org.apache.calcite.schema.impl.AbstractTable;
-import org.apache.calcite.sql.SqlKind;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.apache.calcite.util.ImmutableIntList;
-import org.apache.calcite.util.Source;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -27,9 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 //public class HiveTable extends AbstractTable implements FilterableTable {
 public class HiveTable extends AbstractTable implements ProjectableFilterableTable {
@@ -114,64 +103,6 @@ public class HiveTable extends AbstractTable implements ProjectableFilterableTab
                 return Object.class;
         }
     }
-
-//    public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
-//    	System.out.println("iam here");
-//        // Implement scanning logic to retrieve data from the Hive table
-//    	try (Connection hiveConnection = establishConnection(hiveConnectionUrl, hiveUser, hivePassword); 
-//             Statement statement = hiveConnection.createStatement()) {
-//    		 System.out.println("iam here");
-//    		 statement.executeQuery("use " + namespace);
-//    		 
-//    		 ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
-//
-//             List<Object[]> rows = new ArrayList<>();
-//             while (resultSet.next()) {
-//                 ResultSetMetaData metaData = resultSet.getMetaData();
-//                 int columnCount = metaData.getColumnCount();
-//                 Object[] row = new Object[columnCount];
-//                 for (int i = 0; i < columnCount; i++) {
-//                     row[i] = resultSet.getObject(i + 1);
-//                 }
-//                 System.out.println(row.toString());
-//                 rows.add(row);
-//             }
-//
-//             return new AbstractEnumerable<Object[]>() {
-//                 @Override
-//                 public Enumerator<Object[]> enumerator() {
-//                     return Linq4j.iterableEnumerator(() -> rows.iterator());
-//                 }
-//             };
-//         } catch (SQLException e) {
-//             throw new RuntimeException("Failed to execute query", e);
-//         }
-//     }
-//                       }
-
-//                        @Override
-//                        public Object[] next() {
-//                            try {
-//                            	System.out.println("Inside Next Function...");
-//                                ResultSetMetaData metaData = resultSet.getMetaData();
-//                                int columnCount = metaData.getColumnCount();
-//                                Object[] row = new Object[columnCount];
-//                                for (int i = 0; i < columnCount; i++) {
-//                                    row[i] = resultSet.getObject(i + 1);
-//                                }
-//                                System.out.println(row.toString());
-//                                return row;
-//                            } catch (SQLException e) {
-//                                throw new RuntimeException("Error while reading from ResultSet", e);
-//                            }
-//                        }
-//                    });
-//                }
-//            };
-//        } 
-//    		}catch (SQLException e) {
-//            throw new RuntimeException("Failed to execute query", e);
-//        }
  
 
     public void executeUpdate(String query) {
@@ -265,79 +196,3 @@ public class HiveTable extends AbstractTable implements ProjectableFilterableTab
 }
 
 
-//	@Override
-//	public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
-//		// TODO Auto-generated method stub
-//		System.out.println("Insid Enumerator\n\n-------------------\n");
-//		JavaTypeFactory typeFactory = root.getTypeFactory();
-//	    final List<RelDataTypeField> fieldTypes = getRowType(typeFactory).getFieldList();
-//        final @Nullable String[] filterValues = new String[fieldTypes.size()];
-//	    filters.removeIf(filter -> addFilter(filter, filterValues));
-//	    final List<Integer> fields = ImmutableIntList.identity(fieldTypes.size());
-//	    final AtomicBoolean cancelFlag = DataContext.Variable.CANCEL_FLAG.get(root);
-//
-//        return new AbstractEnumerable<@Nullable Object[]>() {
-//          @Override public Enumerator<@Nullable Object[]> enumerator() {
-//            return new HiveEnumerator<>(cancelFlag, filterValues, fields);
-//          }
-//        };
-//        
-//	}
-//	
-//	private static boolean addFilter(RexNode filter, @Nullable Object[] filterValues) {
-//	    if (filter.isA(SqlKind.AND)) {
-//	        // We cannot refine(remove) the operands of AND,
-//	        // it will cause o.a.c.i.TableScanNode.createFilterable filters check failed.
-//	      ((RexCall) filter).getOperands().forEach(subFilter -> addFilter(subFilter, filterValues));
-//	    } else if (filter.isA(SqlKind.EQUALS)) {
-//	      final RexCall call = (RexCall) filter;
-//	      RexNode left = call.getOperands().get(0);
-//	      if (left.isA(SqlKind.CAST)) {
-//	        left = ((RexCall) left).operands.get(0);
-//	      }
-//	      final RexNode right = call.getOperands().get(1);
-//	      if (left instanceof RexInputRef
-//	          && right instanceof RexLiteral) {
-//	        final int index = ((RexInputRef) left).getIndex();
-//	        if (filterValues[index] == null) {
-//	          filterValues[index] = ((RexLiteral) right).getValue2().toString();
-//	          return true;
-//	        }
-//	      }
-//	    }
-//	    return false;
-//	  }
-//
-//}
-//
-//class HiveEnumerator<E> implements Enumerator<E> {
-//      private final AtomicBoolean cancelFlag;
-//      private final @Nullable Object[] filterValues;
-//      private final List<Integer> fields;
-//      private boolean cancelRequested = false;
-//
-//      HiveEnumerator(AtomicBoolean cancelFlag, @Nullable Object[] filterValues, List<Integer> fields) {
-//        this.cancelFlag = cancelFlag;
-//        this.filterValues = filterValues;
-//        this.fields = fields;
-//      }
-//
-//      @Override public E current() {
-//        return null;
-//      }
-//
-//      @Override public boolean moveNext() {
-//        if (cancelFlag.get()) {
-//          cancelRequested = true;
-//          return false;
-//        }
-//        return true;
-//      }
-//
-//      @Override public void reset() {
-//        cancelRequested = false;
-//      }
-//
-//      @Override public void close() {
-//      }
-//    }

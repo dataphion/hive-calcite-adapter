@@ -2,20 +2,15 @@ package com.dataphion.calcite.adapter.hive;
 
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.AbstractSchema;
-import org.apache.calcite.util.Source;
-import org.apache.calcite.util.Sources;
 
-import java.sql.DatabaseMetaData;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 public class HiveSchema extends AbstractSchema {
 
@@ -64,9 +59,15 @@ public class HiveSchema extends AbstractSchema {
     @SuppressWarnings("finally")
 	@Override
     protected Map<String, Table> getTableMap() {
+        System.out.println("DBG:: Inside getTableMap.. => "+catalog);
         Map<String, Table> tableMap = new HashMap<>();
-                
+        SessionData sessionData = SessionData.getInstance();
 	    Properties properties = new Properties();
+        if(sessionData.getTables(catalog, namespace) != null) {
+            System.out.println("DBG:: Serving from cache..");
+        	System.out.println("tableMap from sessionData: " + sessionData.getTables(catalog, namespace));
+        	return sessionData.getTables(catalog, namespace);
+        }
 	    properties.setProperty("user", hiveUser);
 	    properties.setProperty("password", hivePassword);
         // Initialize Hive JDBC connection
@@ -84,36 +85,7 @@ public class HiveSchema extends AbstractSchema {
 	            tableMap.put(tableName, new HiveTable(tableName, hiveConnectionUrl, hiveUser, hivePassword, namespace));
 	            System.out.println("tableMap" + tableMap);
 	        }
-       	    
-       	    
-       	    // ResultSetMetaData metaData = resultSet.getMetaData();
-//                int columnCount = metaData.getColumnCount();
-//
-//                while (resultSet.next()) {
-//                    Map<String, Object> resultRow = new HashMap<>();
-//                    for (int i = 1; i <= columnCount; i++) {
-//                        String columnName = metaData.getColumnName(i);
-//                        Object columnValue = resultSet.getObject(i);
-//                        resultRow.put(columnName, columnValue);
-//                        System.out.println("columnName -> "+columnName);
-//                        System.out.println(columnValue);
-//                    }
-//            }
-        	
-//        	DatabaseMetaData metaData = connection.getMetaData();   
-//            System.out.println("metaData:" + metaData);
-//            System.out.println("Database Name: " + metaData.getDatabaseProductName());
-//            try (ResultSet tables = metaData.getTables(null, null, null, new String[]{"TABLE"})) {
-//            	System.out.println("tables:" + tables);
-//                while (tables.next()) {
-//                    String tableName = tables.getString("TABLE_NAME");
-//                    System.out.println("tableName:" + tableName);
-//                    System.out.println("1:");
-//                    // Create a HiveTable for each table and add it to the map
-//                    tableMap.put(tableName, new HiveTable(tableName, connection));
-//                }
-//                System.out.println("out");
-//            }
+            sessionData.setTableMaps(catalog, namespace, tableMap);
         } catch (SQLException e) {
             // Handle exception appropriately
             e.printStackTrace();
