@@ -31,7 +31,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+//public class HiveTable extends AbstractTable implements FilterableTable {
 public class HiveTable extends AbstractTable implements ProjectableFilterableTable {
+
 
 	private final String tableName;
 	private final String hiveConnectionUrl;
@@ -113,38 +115,38 @@ public class HiveTable extends AbstractTable implements ProjectableFilterableTab
         }
     }
 
-    public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
-    	System.out.println("iam here");
-        // Implement scanning logic to retrieve data from the Hive table
-    	try (Connection hiveConnection = establishConnection(hiveConnectionUrl, hiveUser, hivePassword); 
-             Statement statement = hiveConnection.createStatement()) {
-    		 System.out.println("iam here");
-    		 statement.executeQuery("use " + namespace);
-    		 
-    		 ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
-
-             List<Object[]> rows = new ArrayList<>();
-             while (resultSet.next()) {
-                 ResultSetMetaData metaData = resultSet.getMetaData();
-                 int columnCount = metaData.getColumnCount();
-                 Object[] row = new Object[columnCount];
-                 for (int i = 0; i < columnCount; i++) {
-                     row[i] = resultSet.getObject(i + 1);
-                 }
-                 System.out.println(row.toString());
-                 rows.add(row);
-             }
-
-             return new AbstractEnumerable<Object[]>() {
-                 @Override
-                 public Enumerator<Object[]> enumerator() {
-                     return Linq4j.iterableEnumerator(() -> rows.iterator());
-                 }
-             };
-         } catch (SQLException e) {
-             throw new RuntimeException("Failed to execute query", e);
-         }
-     }
+//    public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters) {
+//    	System.out.println("iam here");
+//        // Implement scanning logic to retrieve data from the Hive table
+//    	try (Connection hiveConnection = establishConnection(hiveConnectionUrl, hiveUser, hivePassword); 
+//             Statement statement = hiveConnection.createStatement()) {
+//    		 System.out.println("iam here");
+//    		 statement.executeQuery("use " + namespace);
+//    		 
+//    		 ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
+//
+//             List<Object[]> rows = new ArrayList<>();
+//             while (resultSet.next()) {
+//                 ResultSetMetaData metaData = resultSet.getMetaData();
+//                 int columnCount = metaData.getColumnCount();
+//                 Object[] row = new Object[columnCount];
+//                 for (int i = 0; i < columnCount; i++) {
+//                     row[i] = resultSet.getObject(i + 1);
+//                 }
+//                 System.out.println(row.toString());
+//                 rows.add(row);
+//             }
+//
+//             return new AbstractEnumerable<Object[]>() {
+//                 @Override
+//                 public Enumerator<Object[]> enumerator() {
+//                     return Linq4j.iterableEnumerator(() -> rows.iterator());
+//                 }
+//             };
+//         } catch (SQLException e) {
+//             throw new RuntimeException("Failed to execute query", e);
+//         }
+//     }
 //                       }
 
 //                        @Override
@@ -203,13 +205,64 @@ public class HiveTable extends AbstractTable implements ProjectableFilterableTab
 
 
 
-	@Override
-	public Enumerable<@Nullable Object[]> scan(DataContext root, List<RexNode> filters, int @Nullable [] projects) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-}
+    @Override
+    public Enumerable<Object[]> scan(DataContext root, List<RexNode> filters, int[] projects) {
+        // Implement scanning logic with support for projection and filtering
+        try (Connection hiveConnection = establishConnection(hiveConnectionUrl, hiveUser, hivePassword);
+             Statement statement = hiveConnection.createStatement()) {
+            statement.executeQuery("use " + namespace);
 
+            RelDataType rowType = getRowType(root.getTypeFactory());
+
+            // Construct the SELECT query based on the specified projects and filters
+            StringBuilder queryBuilder = new StringBuilder("SELECT ");
+            if (projects == null || projects.length == 0) {
+                queryBuilder.append("*");
+            } else {
+                for (int i = 0; i < projects.length; i++) {
+                    if (i > 0) {
+                        queryBuilder.append(", ");
+                    }
+                    // Use the getFieldName method to get the actual column name
+                    queryBuilder.append(rowType.getFieldList().get(projects[i]).getName());
+                }
+            }
+            queryBuilder.append(" FROM ").append(tableName);
+
+            // Apply filters if present
+            if (filters != null && !filters.isEmpty()) {
+                // TODO: Construct and append WHERE clause based on filters
+            }
+            
+            System.out.println("queryBuilder.toString()");
+            ResultSet resultSet = statement.executeQuery(queryBuilder.toString());
+
+            List<Object[]> rows = new ArrayList<>();
+            while (resultSet.next()) {
+                ResultSetMetaData metaData = resultSet.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                Object[] row = new Object[columnCount];
+                for (int i = 0; i < columnCount; i++) {
+                	
+                    row[i] = resultSet.getObject(i + 1);
+                 }
+                System.out.println(row.toString());
+                rows.add(row);
+            }
+
+            // Return an Enumerable with the result rows
+            return new AbstractEnumerable<Object[]>() {
+                @Override
+                public Enumerator<Object[]> enumerator() {
+                    return Linq4j.iterableEnumerator(() -> rows.iterator());
+                }
+            };
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to execute query", e);
+        }
+    }
+
+}
 
 
 //	@Override
